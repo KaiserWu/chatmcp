@@ -8,23 +8,48 @@ import 'package:chatmcp/utils/file_content.dart';
 
 class FoundryClient extends BaseLLMClient {
   final String apiKey;
-  final String baseUrl;
   final String apiVersion;
   final String modelVersion = '2023-03-15-preview';
   final Map<String, String> _headers;
+  String baseUrl;
+  final bool openAi;
 
   FoundryClient({
     required this.apiKey,
+    required this.baseUrl,
     String? apiVersion,
-    String? baseUrl,
-  })  : baseUrl = (baseUrl == null || baseUrl.isEmpty)
-            ? 'https://YOUR_RESOURCE_NAME.openai.azure.com'
-            : baseUrl,
-        apiVersion = apiVersion ?? 'preview',
+  })  : apiVersion = apiVersion ?? 'preview',
+        openAi = baseUrl.contains('openai.azure') && baseUrl.contains('https://'),
         _headers = {
-          'Content-Type': 'application/json; charset=utf-8',
-          'api-key': apiKey,
-        };
+          'Content-Type': 'application/json; charset=utf-8'
+        } {
+          if (apiKey.isEmpty) {
+            ToastUtils.error('API key is empty, please set it in settings');
+            return;
+          }
+          if (baseUrl.isEmpty) {
+            ToastUtils.error('Foundry base URL is empty, please set it in settings');
+            return;
+          }
+          if (!openAi) {
+            List<String> parts = baseUrl.split(';');
+            if(parts.length == 4){
+                // Convert Foundry short format to full AzureML endpoint
+                final region = parts[0];
+                final subscriptionId = parts[1];
+                final resourceGroup = parts[2];
+                final workspace = parts[3];
+                baseUrl =
+                  'https://$region/agents/v1.0/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.MachineLearningServices/workspaces/$workspace';
+            } else {
+              ToastUtils.error('Foundry ConnectionString format is incorrect: $baseUrl');
+            }
+            _headers.addEntries([MapEntry("Authorization", "Bearer $apiKey")]);
+          } else {
+            _headers.addEntries([MapEntry("api-key", apiKey)]);
+          }
+          Logger.root.info('FoundryClient initialized with base URL: $baseUrl');
+        }
 
   @override
   Future<LLMResponse> chatCompletion(CompletionRequest request) async {
@@ -192,6 +217,10 @@ class FoundryClient extends BaseLLMClient {
         originalError: e,
       );
     }
+  }
+
+  Future<List<String>> agents() async {
+    return []; // Foundry does not support agents
   }
 }
 
