@@ -233,6 +233,16 @@ class McpServerProvider extends ChangeNotifier {
     return _tools;
   }
 
+  final Map<String, List<Map<String, dynamic>>> _resources = {};
+  Map<String, List<Map<String, dynamic>>> get resources {
+    return _resources;
+  }
+
+  final Map<String, List<Map<String, dynamic>>> _prompts = {};
+  Map<String, List<Map<String, dynamic>>> get prompts {
+    return _prompts;
+  }
+
   // 存储工具类别的启用状态
   final Map<String, bool> _toolCategoryEnabled = {};
   Map<String, bool> get toolCategoryEnabled => _toolCategoryEnabled;
@@ -256,6 +266,12 @@ class McpServerProvider extends ChangeNotifier {
     final toolsList = response.toJson()['result']['tools'] as List<dynamic>;
     tools.addAll(toolsList.cast<Map<String, dynamic>>());
     return tools;
+  }
+
+  void getServerSupports(String serverName, McpClient client) {
+    _tools[serverName] = client.tools;
+    _resources[serverName] = client.resources;
+    _prompts[serverName] = client.prompts;
   }
 
   Future<void> _initialize() async {
@@ -342,8 +358,7 @@ class McpServerProvider extends ChangeNotifier {
       clients[serverName] = client;
       loadingServerTools = true;
       notifyListeners();
-      final tools = await getServerTools(serverName, client);
-      _tools[serverName] = tools;
+      getServerSupports(serverName, client);
       loadingServerTools = false;
       notifyListeners();
     }
@@ -376,8 +391,7 @@ class McpServerProvider extends ChangeNotifier {
           clients[serverName] = client;
           loadingServerTools = true;
           notifyListeners();
-          final tools = await getServerTools(serverName, client);
-          _tools[serverName] = tools;
+          getServerSupports(serverName, client);
           loadingServerTools = false;
           notifyListeners();
         }

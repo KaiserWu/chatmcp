@@ -1,3 +1,4 @@
+import 'package:chatmcp/mcp/client/basic_client.dart';
 import 'package:chatmcp/mcp/stdio/stdio_client.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:eventflux/eventflux.dart';
@@ -13,7 +14,7 @@ import 'dart:async';
 // 连接状态枚举
 enum ConnectionState { disconnected, connecting, waitingForEndpoint, connected, reconnecting }
 
-class SSEClient implements McpClient {
+class SSEClient extends BasicClient implements McpClient {
   final ServerConfig _serverConfig;
   final _pendingRequests = <String, Completer<JSONRPCMessage>>{};
   final _processStateController = StreamController<ProcessState>.broadcast();
@@ -355,33 +356,6 @@ class SSEClient implements McpClient {
       Logger.root.severe('initialize failed: $e\n$stack');
       rethrow;
     }
-  }
-
-  @override
-  Future<JSONRPCMessage> sendPing() async {
-    final message = JSONRPCMessage(id: 'ping-1', method: 'ping');
-    return sendMessage(message);
-  }
-
-  @override
-  Future<JSONRPCMessage> sendToolList() async {
-    final message = JSONRPCMessage(id: 'tool-list-1', method: 'tools/list');
-    return sendMessage(message);
-  }
-
-  @override
-  Future<JSONRPCMessage> sendToolCall({required String name, required Map<String, dynamic> arguments, String? id}) async {
-    final message = JSONRPCMessage(
-      method: 'tools/call',
-      params: {
-        'name': name,
-        'arguments': arguments,
-        '_meta': {'progressToken': 0},
-      },
-      id: id ?? 'tool-call-${DateTime.now().millisecondsSinceEpoch}',
-    );
-
-    return sendMessage(message);
   }
 
   // 添加一个实用方法来发送符合格式的通知

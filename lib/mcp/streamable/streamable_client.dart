@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:chatmcp/mcp/client/basic_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import '../models/json_rpc_message.dart';
@@ -64,7 +65,7 @@ class StartSSEOptions {
 }
 
 /// Streamable HTTP客户端实现
-class StreamableClient implements McpClient {
+class StreamableClient extends BasicClient implements McpClient {
   @override
   final ServerConfig serverConfig;
 
@@ -460,33 +461,6 @@ class StreamableClient implements McpClient {
 
     await sendMessage(notifyMessage);
     return initResponse;
-  }
-
-  @override
-  Future<JSONRPCMessage> sendPing() async {
-    final message = JSONRPCMessage(id: 'ping-1', method: 'ping');
-    return sendMessage(message);
-  }
-
-  @override
-  Future<JSONRPCMessage> sendToolList() async {
-    final message = JSONRPCMessage(id: 'tool-list-1', method: 'tools/list');
-    return sendMessage(message);
-  }
-
-  @override
-  Future<JSONRPCMessage> sendToolCall({required String name, required Map<String, dynamic> arguments, String? id}) async {
-    final message = JSONRPCMessage(
-      method: 'tools/call',
-      params: {
-        'name': name,
-        'arguments': arguments,
-        '_meta': {'progressToken': 0},
-      },
-      id: id ?? 'tool-call-${DateTime.now().millisecondsSinceEpoch}',
-    );
-
-    return sendMessage(message);
   }
 
   /// 终止当前会话

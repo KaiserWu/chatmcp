@@ -78,8 +78,25 @@ Future<McpClient?> initializeMcpServer(Map<String, dynamic> mcpServerConfig) asy
     final initResponse = await mcpClient.sendInitialize();
     Logger.root.info('Initialization response: $initResponse');
 
-    final toolListResponse = await mcpClient.sendToolList();
-    Logger.root.info('Tool list response: $toolListResponse');
+    final capabilities = initResponse.result["capabilities"] as Map<String, dynamic>;
+    Logger.root.info('Server capabilities: $capabilities');
+
+    if (capabilities.containsKey("resources") && capabilities["resources"].containsKey("listChanged") && capabilities["resources"]["listChanged"]) {
+      final resourceListResponse = await mcpClient.sendResourcesList();
+      Logger.root.info('Resource list response: $resourceListResponse');
+      final resourceTemplatesResponse = await mcpClient.sendResourcesTemplates();
+      Logger.root.info('Resource templates response: $resourceTemplatesResponse');
+    }
+
+    if (capabilities.containsKey("prompts") && capabilities["prompts"].containsKey("listChanged") && capabilities["prompts"]["listChanged"]) {
+      final promptsListResponse = await mcpClient.sendPromptsList();
+      Logger.root.info('Prompts list response: $promptsListResponse');
+    }
+
+    if (capabilities.containsKey("tools") && capabilities["tools"].containsKey("listChanged") && capabilities["tools"]["listChanged"]) {
+      final toolListResponse = await mcpClient.sendToolList();
+      Logger.root.info('Tool list response: $toolListResponse');
+    }
 
     return mcpClient;
   } catch (e) {
